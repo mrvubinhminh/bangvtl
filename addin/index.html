@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cài Bảng Vẽ Toán cho Word / PowerPoint</title>
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif}
+body{margin:0;background:#f1f5f9;color:#0f172a;line-height:1.6}
+.w{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+h1{margin:0 0 4px;font-size:26px}
+.sub{color:#475569;margin:0 0 20px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;margin:14px 0}
+.card h2{margin:0 0 8px;font-size:18px}
+input{width:100%;height:40px;border:1px solid #cbd5e1;border-radius:9px;padding:0 12px;font-size:14px}
+button{height:42px;border:0;border-radius:10px;padding:0 18px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;cursor:pointer;margin-top:10px}
+code{background:#eef1f8;border-radius:5px;padding:1px 6px;font-size:13px}
+ol{padding-left:22px;margin:6px 0}
+li{margin:4px 0}
+.ok{color:#166534;font-weight:600}
+.warn{color:#b45309}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:700}
+</style>
+</head>
+<body><div class="w">
+<h1>✏️ Bảng Vẽ Toán cho Word &amp; PowerPoint</h1>
+<p class="sub">Vẽ hình học phẳng, hình không gian, công thức → chèn vào tài liệu; hình mang dữ liệu để chọn và sửa tiếp. Tác giả: Vũ Tiến Lực.</p>
+
+<div class="card">
+  <h2>Bước 1 · Tải file cài đặt (manifest.xml)</h2>
+  <p>Địa chỉ add-in (tự điền theo trang web này — thường không cần sửa):</p>
+  <input id="base" spellcheck="false">
+  <p id="chk" class="warn"></p>
+  <button id="dl">⬇ Tải manifest.xml</button>
+</div>
+
+<div class="card">
+  <h2>Bước 2 · Cài vào Office</h2>
+  <details open><summary>Word / PowerPoint trên web (Office 365 — dễ nhất)</summary>
+  <ol>
+    <li>Mở một tài liệu Word (hoặc bài PowerPoint) tại <a href="https://www.office.com" target="_blank" rel="noopener">office.com</a>.</li>
+    <li>Thẻ <b>Trang đầu → Phần bổ trợ (Add-ins)</b> → <b>Phần bổ trợ khác / Nâng cao</b> → mục <b>Phần bổ trợ của tôi</b> → <b>Tải lên phần bổ trợ của tôi</b> (Upload My Add-in).</li>
+    <li>Chọn file <code>manifest.xml</code> vừa tải → <b>Tải lên</b>. Nút <b>Bảng vẽ Toán</b> hiện ở thẻ Trang đầu.</li>
+    <li>Cài 1 lần trong Word là dùng được cả PowerPoint trên web (cùng tài khoản).</li>
+  </ol></details>
+  <details><summary>Word / PowerPoint trên Windows (Office 365, 2019, 2021, 2024)</summary>
+  <ol>
+    <li>Tạo thư mục, ví dụ <code>C:\BangVeToan</code>, chép <code>manifest.xml</code> vào.</li>
+    <li>Chuột phải thư mục → <b>Properties → Sharing → Share…</b> → chọn chính mình → <b>Share</b>. Ghi lại đường dẫn mạng, dạng <code>\\TEN-MAY\BangVeToan</code>.</li>
+    <li>Mở Word: <b>File → Options → Trust Center → Trust Center Settings → Trusted Add-in Catalogs</b> → dán đường dẫn mạng vào <b>Catalog Url</b> → <b>Add catalog</b> → tick <b>Show in Menu</b> → OK. Đóng hẳn Word rồi mở lại.</li>
+    <li><b>Insert → My Add-ins (Phần bổ trợ của tôi) → SHARED FOLDER (THƯ MỤC DÙNG CHUNG)</b> → chọn <b>Bảng Vẽ Toán</b> → Add. Làm tương tự trong PowerPoint.</li>
+  </ol></details>
+  <details><summary>Word / PowerPoint trên macOS</summary>
+  <ol>
+    <li>Finder → <b>Go → Go to Folder…</b> → dán <code>~/Library/Containers/com.microsoft.Word/Data/Documents/wef</code> (chưa có thư mục <code>wef</code> thì tạo) → chép <code>manifest.xml</code> vào.</li>
+    <li>PowerPoint: làm tương tự với <code>~/Library/Containers/com.microsoft.Powerpoint/Data/Documents/wef</code>.</li>
+    <li>Mở lại Word / PowerPoint → <b>Insert → Add-ins → My Add-ins</b> (mũi tên nhỏ) → chọn <b>Bảng Vẽ Toán</b>.</li>
+  </ol></details>
+  <details><summary>Cài cho cả trường / tổ (Microsoft 365 quản trị)</summary>
+  <p>Quản trị viên vào <b>admin.microsoft.com → Settings → Integrated apps → Upload custom apps</b> → chọn <code>manifest.xml</code> → giao cho các giáo viên. Add-in tự hiện trong Word / PowerPoint của mọi người.</p></details>
+</div>
+
+<div class="card">
+  <h2>Dùng thế nào?</h2>
+  <ol>
+    <li>Thẻ <b>Trang đầu → Bảng vẽ Toán</b> → khung bên phải mở ra → <b>✏️ Vẽ hình mới</b>.</li>
+    <li>Cửa sổ bảng vẽ lớn: bút, hình phẳng, hình không gian, nét đứt, thước, compa, chữ &amp; công thức (phím T)… → <b>✓ Chèn vào tài liệu</b> (Ctrl+Enter).</li>
+    <li>Muốn sửa: bấm chọn hình trong tài liệu → <b>✎ Sửa hình đang chọn</b> → vẽ tiếp → <b>✓ Cập nhật</b>. Dữ liệu nét vẽ nằm ngay trong file .docx / .pptx.</li>
+  </ol>
+  <p class="warn">Cần Office 2019 trở lên hoặc Microsoft 365 / Office trên web. Office 2010, 2013, 2016 bản cũ không chạy add-in loại này. PowerPoint chèn hình dạng vector (SVG); Word chèn ảnh PNG nét cao.</p>
+</div>
+</div>
+<script type="text/plain" id="tpl"><?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
+  <Id>df0853d0-6ab4-4ba3-a1a7-47559964c62c</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Vu Tien Luc</ProviderName>
+  <DefaultLocale>vi-VN</DefaultLocale>
+  <DisplayName DefaultValue="Bảng Vẽ Toán"/>
+  <Description DefaultValue="Vẽ hình học phẳng, hình không gian, công thức Toán rồi chèn vào Word / PowerPoint; hình mang dữ liệu để sửa lại."/>
+  <IconUrl DefaultValue="{BASE}icons/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="{BASE}icons/icon-64.png"/>
+  <SupportUrl DefaultValue="{BASE}tao-manifest.html"/>
+  <AppDomains>
+    <AppDomain>{ORIGIN}</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+    <Host Name="Presentation"/>
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="{BASE}taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="Help.Url"/>
+          </GetStarted>
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="QMH.Group.Word">
+                <Label resid="Group.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16"/>
+                  <bt:Image size="32" resid="Icon.32"/>
+                  <bt:Image size="80" resid="Icon.80"/>
+                </Icon>
+                <Control xsi:type="Button" id="QMH.Button.Word">
+                  <Label resid="Button.Label"/>
+                  <Supertip>
+                    <Title resid="Button.Label"/>
+                    <Description resid="Button.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16"/>
+                    <bt:Image size="32" resid="Icon.32"/>
+                    <bt:Image size="80" resid="Icon.80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>QMHPane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+      <Host xsi:type="Presentation">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="Help.Url"/>
+          </GetStarted>
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="QMH.Group.Ppt">
+                <Label resid="Group.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16"/>
+                  <bt:Image size="32" resid="Icon.32"/>
+                  <bt:Image size="80" resid="Icon.80"/>
+                </Icon>
+                <Control xsi:type="Button" id="QMH.Button.Ppt">
+                  <Label resid="Button.Label"/>
+                  <Supertip>
+                    <Title resid="Button.Label"/>
+                    <Description resid="Button.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16"/>
+                    <bt:Image size="32" resid="Icon.32"/>
+                    <bt:Image size="80" resid="Icon.80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>QMHPane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="{BASE}icons/icon-16.png"/>
+        <bt:Image id="Icon.32" DefaultValue="{BASE}icons/icon-32.png"/>
+        <bt:Image id="Icon.80" DefaultValue="{BASE}icons/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Taskpane.Url" DefaultValue="{BASE}taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="{BASE}commands.html"/>
+        <bt:Url id="Help.Url" DefaultValue="{BASE}tao-manifest.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="Bảng Vẽ Toán đã sẵn sàng"/>
+        <bt:String id="Group.Label" DefaultValue="Bảng Vẽ Toán"/>
+        <bt:String id="Button.Label" DefaultValue="Bảng vẽ Toán"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Thẻ Trang đầu → Bảng vẽ Toán: vẽ hình, gõ công thức rồi chèn vào tài liệu."/>
+        <bt:String id="Button.Tooltip" DefaultValue="Mở Bảng Vẽ Toán: vẽ hình học phẳng, hình không gian, công thức rồi chèn; chọn hình đã chèn để sửa tiếp."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
+</script>
+<script>
+  const base = document.getElementById('base');
+  base.value = location.href.replace(/[^/]*([?#].*)?$/, '');
+  function check() {
+    const u = base.value.trim();
+    document.getElementById('chk').textContent = /^https:\/\/[^/]+\/.*\/?$/.test(u) ? '' : '⚠ Add-in phải chạy trên địa chỉ https:// (ví dụ trang Netlify / GitHub Pages của thầy). Mở trang này từ địa chỉ đó để tự điền đúng.';
+  }
+  base.oninput = check; check();
+  document.getElementById('dl').onclick = () => {
+    let b = base.value.trim(); if (!b.endsWith('/')) b += '/';
+    const origin = new URL(b).origin;
+    const xml = document.getElementById('tpl').textContent.trim().replaceAll('{BASE}', b).replaceAll('{ORIGIN}', origin);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml' })); a.download = 'manifest.xml'; a.click();
+  };
+</script>
+</body></html>

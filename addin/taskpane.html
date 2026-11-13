@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bảng Vẽ Toán</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif}
+body{margin:0;background:#f8fafc;color:#0f172a;font-size:13.5px}
+header{background:#1e293b;color:#fff;padding:12px 14px}
+header b{font-size:16px}
+header p{margin:4px 0 0;color:#cbd5e1;font-size:12px}
+main{padding:12px 14px}
+.big{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;text-align:left}
+.big small{display:block;font-weight:400;font-size:12px;opacity:.85;margin-top:2px}
+.new{background:#2563eb;color:#fff}
+.edit{background:#fff;border:1px solid #cbd5e1!important;color:#0f172a}
+.big:disabled{opacity:.5;cursor:default}
+h4{margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.opt{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px}
+.opt label{display:flex;gap:6px;align-items:center}
+.opt select{flex:1;height:30px;border-radius:7px;border:1px solid #cbd5e1}
+#status{margin:10px 0;padding:8px 10px;border-radius:8px;background:#e2e8f0;font-size:12.5px;display:none}
+#status.on{display:block}
+#status.err{background:#fee2e2;color:#991b1b}
+#status.ok{background:#dcfce7;color:#166534}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.th{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:6px;cursor:pointer;text-align:center;font-size:11.5px;color:#475569}
+.th:hover{border-color:#2563eb}
+.th img{display:block;width:100%;height:80px;object-fit:contain;background:repeating-conic-gradient(#f1f5f9 0 25%,#fff 0 50%) 0 0/12px 12px;border-radius:6px;margin-bottom:4px}
+.tip{font-size:12px;color:#64748b;line-height:1.5}
+.tip b{color:#0f172a}
+</style>
+</head>
+<body>
+<header><b>✏️ Bảng Vẽ Toán</b><p>Vẽ hình học phẳng, hình không gian, công thức — chèn vào <span id="hostName">tài liệu</span></p></header>
+<main>
+  <button class="big new" id="newBtn" disabled>✏️ Vẽ hình mới<small>Mở bảng vẽ lớn: bút, hình mẫu, thước, compa, công thức…</small></button>
+  <button class="big edit" id="editBtn" disabled>✎ Sửa hình đang chọn<small>Bấm chọn hình đã chèn trong tài liệu rồi bấm nút này</small></button>
+  <div id="status"></div>
+  <h4>Tuỳ chọn chèn</h4>
+  <div class="opt">
+    <label>Kiểu hình <select id="mode"><option value="svg">Vector SVG (nét sắc, phóng to không vỡ)</option><option value="png">Ảnh PNG nét cao</option></select></label>
+    <label>Cỡ chèn <select id="scale"><option value="1">Như trên bảng (100%)</option><option value="0.75">Nhỏ hơn (75%)</option><option value="0.5">Nhỏ (50%)</option><option value="1.25">Lớn hơn (125%)</option></select></label>
+  </div>
+  <h4>Hình trong tài liệu này</h4>
+  <div class="list" id="list"></div>
+  <p class="tip" id="emptyTip">Chưa có hình nào. Bấm <b>✏️ Vẽ hình mới</b>.</p>
+  <h4>Mẹo</h4>
+  <p class="tip">• Hình chèn vào mang theo <b>dữ liệu nét vẽ</b> lưu ngay trong file — chọn hình rồi bấm <b>✎ Sửa</b> để vẽ tiếp, đổi tên điểm, thêm công thức.<br>
+  • Trong bảng vẽ: phím <b>T</b> gõ chữ &amp; công thức (bảng ký hiệu bên phải), <b>G</b> hình mẫu, <b>S</b> chọn/sao chép, <b>C</b> compa, <b>Ctrl+Enter</b> chèn.<br>
+  • Gửi file cho đồng nghiệp: ai cài add-in này đều sửa tiếp được; người chưa cài vẫn xem/in hình bình thường.</p>
+</main>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const BASE = location.href.replace(/[^/]*([?#].*)?$/, '');
+  let host = null, dlg = null, pending = null;
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function status(t, kind) { const s = $('#status'); s.textContent = t; s.className = 'on' + (kind ? ' ' + kind : ''); if (kind === 'ok') setTimeout(() => s.classList.remove('on'), 4000); }
+  const PREFS = 'qmhAddin.prefs';
+  function prefs() { try { return JSON.parse(localStorage.getItem(PREFS) || '{}'); } catch (e) { return {}; } }
+  function savePrefs() { try { localStorage.setItem(PREFS, JSON.stringify({ mode: $('#mode').value, scale: $('#scale').value })); } catch (e) {} }
+
+  /* ---------- dữ liệu lưu trong tài liệu (Office settings) ---------- */
+  const S = () => Office.context.document.settings;
+  const getIndex = () => S().get('qmh:index') || [];
+  function saveSettings() { return new Promise((ok) => S().saveAsync(() => ok())); }
+  async function storeDrawing(p) {
+    const idx = getIndex().filter((x) => x !== p.id); idx.unshift(p.id);
+    try {
+      S().set('qmh:' + p.id, { data: p.data, w: p.w, h: p.h, bg: p.bg, thumb: p.thumb, time: new Date().toISOString() });
+      S().set('qmh:index', idx.slice(0, 200));
+      await saveSettings();
+      return true;
+    } catch (e) { return false; }
+  }
+  const getDrawing = (id) => S().get('qmh:' + id);
+
+  /* ---------- mở bảng vẽ (cửa sổ lớn) ---------- */
+  function openBoard(edit) {
+    const id = (edit && edit.id) || uid();
+    pending = edit || null;
+    try { localStorage.setItem('qmhAddin.in', JSON.stringify({ id, data: edit && edit.rec ? edit.rec.data : null, bg: edit && edit.rec ? edit.rec.bg : null })); } catch (e) {}
+    const url = BASE + 'board.html?id=' + encodeURIComponent(id) + (edit ? '&edit=1' : '');
+    Office.context.ui.displayDialogAsync(url, { height: 92, width: 94, displayInIframe: true }, (res) => {
+      if (res.status !== Office.AsyncResultStatus.Succeeded) { status('Không mở được bảng vẽ: ' + res.error.message, 'err'); return; }
+      dlg = res.value; let buf = [];
+      dlg.addEventHandler(Office.EventType.DialogMessageReceived, async (arg) => {
+        let m; try { m = JSON.parse(arg.message); } catch (e) { return; }
+        if (m.type === 'cancel') { dlg.close(); dlg = null; return; }
+        if (m.type === 'need' && edit && edit.rec) {          // gửi dữ liệu cũ sang bảng vẽ
+          const s = JSON.stringify({ data: edit.rec.data, bg: edit.rec.bg }), N = 30000;
+          for (let i = 0; i * N < s.length; i++) dlg.messageChild(JSON.stringify({ type: 'chunk', i, s: s.slice(i * N, (i + 1) * N) }));
+          dlg.messageChild(JSON.stringify({ type: 'data-end' })); return;
+        }
+        if (m.type === 'chunk') { buf[m.i] = m.s; return; }
+        if (m.type === 'done') {
+          const p = JSON.parse(buf.join('')); buf = [];
+          dlg.close(); dlg = null;
+          status('⏳ Đang chèn hình…');
+          try { await insert(p, pending); } catch (e) { status('⚠ Chưa chèn được: ' + e.message, 'err'); }
+        }
+      });
+      dlg.addEventHandler(Office.EventType.DialogEventReceived, () => { dlg = null; });
+    });
+  }
+
+  /* ---------- chèn vào PowerPoint / Word ---------- */
+  const b64 = (dataUrl) => dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const setData = (data, opt) => new Promise((ok, no) => Office.context.document.setSelectedDataAsync(data, opt, (r) => (r.status === Office.AsyncResultStatus.Succeeded ? ok() : no(new Error(r.error.message)))));
+  async function insert(p, edit) {
+    const k = +$('#scale').value || 1, mode = $('#mode').value;
+    let wPt = p.w * 0.75 * k, hPt = p.h * 0.75 * k;
+    if (edit && edit.old && edit.rec && edit.rec.w) { const f = edit.old.width / edit.rec.w; wPt = p.w * f; hPt = p.h * f; }   // giữ tỉ lệ như hình cũ
+    const stored = await storeDrawing(p);
+    if (host === Office.HostType.PowerPoint) await insertPpt(p, edit, wPt, hPt, mode);
+    else await insertWord(p, edit, wPt, hPt, mode);
+    status(stored ? (edit ? '✓ Đã cập nhật hình' : '✓ Đã chèn hình — chọn hình rồi bấm ✎ Sửa để vẽ tiếp') : '✓ Đã chèn hình (hình quá lớn nên không lưu được dữ liệu để sửa lại)', 'ok');
+    renderList();
+  }
+  async function insertPpt(p, edit, wPt, hPt, mode) {
+    const opt = { imageWidth: wPt, imageHeight: hPt };
+    if (edit && edit.old) {
+      opt.imageLeft = edit.old.left; opt.imageTop = edit.old.top;
+      await PowerPoint.run(async (ctx) => { ctx.presentation.slides.getItem(edit.old.slideId).shapes.getItem(edit.old.shapeId).delete(); await ctx.sync(); }).catch(() => {});
+    }
+    if (mode === 'svg') {
+      try { await setData(p.svg, { ...opt, coercionType: Office.CoercionType.XmlSvg }); }
+      catch (e) { await setData(b64(p.png), { ...opt, coercionType: Office.CoercionType.Image }); }
+    } else await setData(b64(p.png), { ...opt, coercionType: Office.CoercionType.Image });
+    // đánh dấu hình để lần sau sửa được
+    try {
+      await PowerPoint.run(async (ctx) => {
+        const sh = ctx.presentation.getSelectedShapes(); sh.load('items'); await ctx.sync();
+        if (sh.items[0]) { sh.items[0].tags.add('QMH_DRAW', p.id); sh.items[0].name = 'Bảng vẽ Toán ' + p.id; await ctx.sync(); }
+      });
+    } catch (e) { /* PowerPoint cũ: không gắn được nhãn */ }
+  }
+  async function insertWord(p, edit, wPt, hPt, mode) {
+    await Word.run(async (ctx) => {
+      let pic;
+      if (edit && edit.old) {
+        const pics = ctx.document.body.inlinePictures; pics.load('items/altTextTitle'); await ctx.sync();
+        const old = pics.items.find((x) => x.altTextTitle === 'QMH:' + p.id);
+        pic = old ? old.insertInlinePictureFromBase64(b64(p.png), 'Replace') : ctx.document.getSelection().insertInlinePictureFromBase64(b64(p.png), 'Replace');
+      } else pic = ctx.document.getSelection().insertInlinePictureFromBase64(b64(p.png), 'Replace');
+      pic.width = wPt; pic.height = hPt;
+      pic.altTextTitle = 'QMH:' + p.id;
+      pic.altTextDescription = 'Hình vẽ Toán (Bảng Vẽ Toán) — chọn hình rồi bấm ✎ Sửa trong add-in để vẽ tiếp';
+      await ctx.sync();
+    });
+  }
+
+  /* ---------- sửa hình đang chọn ---------- */
+  async function editSelected() {
+    try {
+      let id = null, old = null;
+      if (host === Office.HostType.PowerPoint) {
+        await PowerPoint.run(async (ctx) => {
+          const sh = ctx.presentation.getSelectedShapes(); sh.load('items/id,items/left,items/top,items/width,items/height');
+          const sl = ctx.presentation.getSelectedSlides(); sl.load('items/id');
+          await ctx.sync();
+          const s = sh.items[0]; if (!s) return;
+          const tag = s.tags.getItemOrNullObject('QMH_DRAW'); tag.load('value'); await ctx.sync();
+          if (!tag.isNullObject) { id = tag.value; old = { shapeId: s.id, slideId: sl.items[0] && sl.items[0].id, left: s.left, top: s.top, width: s.width, height: s.height }; }
+        });
+      } else {
+        await Word.run(async (ctx) => {
+          const pic = ctx.document.getSelection().inlinePictures.getFirstOrNullObject(); pic.load('altTextTitle,width,height'); await ctx.sync();
+          if (!pic.isNullObject && /^QMH:/.test(pic.altTextTitle || '')) { id = pic.altTextTitle.slice(4); old = { width: pic.width, height: pic.height }; }
+        });
+      }
+      if (!id) return status('Hãy bấm chọn một hình đã chèn bằng Bảng Vẽ Toán rồi bấm ✎ Sửa.', 'err');
+      const rec = getDrawing(id);
+      if (!rec) return status('Không tìm thấy dữ liệu nét vẽ của hình này trong file (có thể hình được chép từ file khác).', 'err');
+      if (old) { old.width = old.width || rec.w * 0.75; }
+      openBoard({ id, rec, old });
+    } catch (e) { status('Bản Office này chưa hỗ trợ sửa hình đang chọn (' + e.message + ').', 'err'); }
+  }
+  // danh sách hình trong file → bấm để chọn & sửa
+  function renderList() {
+    const box = $('#list'); box.innerHTML = '';
+    const idx = getIndex();
+    $('#emptyTip').hidden = !!idx.length;
+    for (const id of idx) {
+      const r = getDrawing(id); if (!r) continue;
+      const el = document.createElement('div'); el.className = 'th'; el.title = 'Chọn hình này trong tài liệu';
+      el.innerHTML = `<img src="${r.thumb || ''}" alt="">${new Date(r.time).toLocaleString('vi-VN')}`;
+      el.onclick = () => selectById(id);
+      box.append(el);
+    }
+  }
+  async function selectById(id) {
+    try {
+      if (host === Office.HostType.PowerPoint) {
+        await PowerPoint.run(async (ctx) => {
+          const slides = ctx.presentation.slides; slides.load('items/id'); await ctx.sync();
+          for (const sl of slides.items) {
+            const shapes = sl.shapes; shapes.load('items/id'); await ctx.sync();
+            const tags = shapes.items.map((s) => { const t = s.tags.getItemOrNullObject('QMH_DRAW'); t.load('value'); return [s, t]; });
+            await ctx.sync();
+            const hit = tags.find(([, t]) => !t.isNullObject && t.value === id);
+            if (hit) { ctx.presentation.setSelectedSlides([sl.id]); sl.setSelectedShapes([hit[0].id]); await ctx.sync(); status('Đã chọn hình — bấm ✎ Sửa để vẽ tiếp', 'ok'); return; }
+          }
+          status('Không thấy hình này trong bài (có thể đã bị xoá).', 'err');
+        });
+      } else {
+        await Word.run(async (ctx) => {
+          const pics = ctx.document.body.inlinePictures; pics.load('items/altTextTitle'); await ctx.sync();
+          const p = pics.items.find((x) => x.altTextTitle === 'QMH:' + id);
+          if (p) { p.select(); await ctx.sync(); status('Đã chọn hình — bấm ✎ Sửa để vẽ tiếp', 'ok'); } else status('Không thấy hình này trong tài liệu (có thể đã bị xoá).', 'err');
+        });
+      }
+    } catch (e) { status('Không chọn được hình: ' + e.message, 'err'); }
+  }
+
+  Office.onReady((info) => {
+    host = info.host;
+    $('#hostName').textContent = host === Office.HostType.PowerPoint ? 'PowerPoint' : host === Office.HostType.Word ? 'Word' : 'tài liệu';
+    const pf = prefs();
+    $('#mode').value = pf.mode || (host === Office.HostType.Word ? 'png' : 'svg');
+    if (pf.scale) $('#scale').value = pf.scale;
+    if (host === Office.HostType.Word) { $('#mode').value = 'png'; $('#mode').disabled = true; $('#mode').title = 'Word: chèn ảnh PNG nét cao (gấp 2–3 lần) để sửa lại được'; }
+    $('#mode').onchange = savePrefs; $('#scale').onchange = savePrefs;
+    $('#newBtn').disabled = $('#editBtn').disabled = !host;
+    $('#newBtn').onclick = () => openBoard(null);
+    $('#editBtn').onclick = editSelected;
+    if (!host) status('Trang này chạy bên trong Word / PowerPoint (sau khi cài add-in).', 'err');
+    else renderList();
+  });
+})();
+</script>
+</body>
+</html>
